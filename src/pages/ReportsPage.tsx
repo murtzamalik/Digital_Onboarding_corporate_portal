@@ -1,6 +1,6 @@
+import { Alert, Box, Button, Stack, TextField, Typography } from '@mui/material'
 import { useState } from 'react'
-import { getPortalAccessToken } from '../auth/token'
-import { runtimeConfig } from '../config/runtime'
+import { apiClient } from '../api/client'
 
 function currentYearMonth(): string {
   const d = new Date()
@@ -9,17 +9,9 @@ function currentYearMonth(): string {
   return `${y}-${m}`
 }
 
-async function downloadReport(path: string, filename: string) {
-  const token = getPortalAccessToken()
-  const url = `${runtimeConfig.apiBaseUrl}${path}`
-  const res = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  })
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`)
-  }
-  const blob = await res.blob()
-  const href = URL.createObjectURL(blob)
+async function downloadBlob(path: string, filename: string) {
+  const { data } = await apiClient.get<Blob>(path, { responseType: 'blob' })
+  const href = URL.createObjectURL(data)
   const a = document.createElement('a')
   a.href = href
   a.download = filename
@@ -37,7 +29,7 @@ export function ReportsPage() {
     setMessage(null)
     setBusy(true)
     try {
-      await downloadReport(path, filename)
+      await downloadBlob(path, filename)
       setMessage(`${label} download started.`)
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Download failed. Sign in and try again.')
@@ -47,71 +39,83 @@ export function ReportsPage() {
   }
 
   return (
-    <section className="page">
-      <h1 className="page__title">Reports</h1>
-      <p className="page__lead">Download CSV exports from the CEBOS API (portal role required).</p>
+    <Box
+      component="section"
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        p: 3,
+      }}
+    >
+      <Typography variant="h6" component="h1" gutterBottom>
+        Reports
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Download CSV exports from the CEBOS API (portal role required).
+      </Typography>
 
-      <div className="page__stack">
-        <label className="page__label">
-          Month (YYYY-MM)
-          <input
-            className="page__input"
+      <Stack spacing={3} sx={{ maxWidth: 360 }}>
+        <Stack spacing={1.5}>
+          <TextField
+            label="Month (YYYY-MM)"
             value={month}
             onChange={(e) => setMonth(e.target.value)}
-            pattern="\d{4}-\d{2}"
             placeholder="2026-04"
+            slotProps={{ htmlInput: { pattern: '\\d{4}-\\d{2}' } }}
+            fullWidth
           />
-        </label>
-        <button
-          className="page__button"
-          type="button"
-          disabled={busy || !/^\d{4}-\d{2}$/.test(month)}
-          onClick={() =>
-            runDownload('Monthly', `/reports/monthly?month=${encodeURIComponent(month)}`, `monthly-${month}.csv`)
-          }
-        >
-          Download monthly CSV
-        </button>
-      </div>
+          <Button
+            variant="contained"
+            disabled={busy || !/^\d{4}-\d{2}$/.test(month)}
+            onClick={() =>
+              runDownload('Monthly', `/reports/monthly?month=${encodeURIComponent(month)}`, `monthly-${month}.csv`)
+            }
+          >
+            Download monthly CSV
+          </Button>
+        </Stack>
 
-      <div className="page__stack">
-        <label className="page__label">
-          Batch reference
-          <input
-            className="page__input"
+        <Stack spacing={1.5}>
+          <TextField
+            label="Batch reference"
             value={batchRef}
             onChange={(e) => setBatchRef(e.target.value)}
             placeholder="BATCH-ABC123"
+            fullWidth
           />
-        </label>
-        <button
-          className="page__button"
-          type="button"
-          disabled={busy || !batchRef.trim()}
-          onClick={() =>
-            runDownload(
-              'Batch',
-              `/reports/batch/${encodeURIComponent(batchRef.trim())}`,
-              `batch-${batchRef.trim()}.csv`,
-            )
-          }
-        >
-          Download batch CSV
-        </button>
-      </div>
+          <Button
+            variant="contained"
+            disabled={busy || !batchRef.trim()}
+            onClick={() =>
+              runDownload(
+                'Batch',
+                `/reports/batch/${encodeURIComponent(batchRef.trim())}`,
+                `batch-${batchRef.trim()}.csv`,
+              )
+            }
+          >
+            Download batch CSV
+          </Button>
+        </Stack>
 
-      <div className="page__stack">
-        <button
-          className="page__button"
-          type="button"
-          disabled={busy}
-          onClick={() => runDownload('Blocked employees', '/reports/blocked', 'blocked-employees.csv')}
-        >
-          Download blocked employees CSV
-        </button>
-      </div>
+        <Box>
+          <Button
+            variant="outlined"
+            disabled={busy}
+            onClick={() => runDownload('Blocked employees', '/reports/blocked', 'blocked-employees.csv')}
+          >
+            Download blocked employees CSV
+          </Button>
+        </Box>
+      </Stack>
 
-      {message ? <p className="page__notice">{message}</p> : null}
-    </section>
+      {message ? (
+        <Alert severity={message.includes('failed') ? 'error' : 'success'} sx={{ mt: 2 }}>
+          {message}
+        </Alert>
+      ) : null}
+    </Box>
   )
 }

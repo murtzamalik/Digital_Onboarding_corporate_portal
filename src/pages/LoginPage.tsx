@@ -1,3 +1,14 @@
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Link as MuiLink,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import axios from 'axios'
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -30,39 +41,57 @@ export function LoginPage() {
   }
 
   return (
-    <section className="page">
-      <h1 className="page__title">Corporate portal login</h1>
-      <form className="page__form" onSubmit={onSubmit}>
-        <label className="page__label">
-          Email
-          <input
-            className="page__input"
-            type="email"
-            autoComplete="username"
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            required
-          />
-        </label>
-        <label className="page__label">
-          Password
-          <input
-            className="page__input"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(ev) => setPassword(ev.target.value)}
-            required
-          />
-        </label>
-        {error ? <p className="page__error">{error}</p> : null}
-        <button className="page__button" type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-        <p className="page__notice">
-          <Link to="/forgot-password">Forgot password?</Link>
-        </p>
-      </form>
-    </section>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, border: 1, borderColor: 'divider' }}>
+          <Typography variant="h5" component="h1" gutterBottom>
+            Corporate portal login
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Sign in with your corporate user account.
+          </Typography>
+          <Box component="form" onSubmit={onSubmit}>
+            <Stack spacing={2}>
+              <TextField
+                label="Email"
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(ev) => setEmail(ev.target.value)}
+                required
+                fullWidth
+              />
+              <TextField
+                label="Password"
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(ev) => setPassword(ev.target.value)}
+                required
+                fullWidth
+              />
+              {error ? <Alert severity="error">{error}</Alert> : null}
+              <Button type="submit" disabled={busy} fullWidth size="large">
+                {busy ? 'Signing in…' : 'Sign in'}
+              </Button>
+              <Typography variant="body2" sx={{ textAlign: 'center' }}>
+                <MuiLink component={Link} to="/forgot-password" underline="hover">
+                  Forgot password?
+                </MuiLink>
+              </Typography>
+            </Stack>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   )
 }

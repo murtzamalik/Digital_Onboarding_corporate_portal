@@ -1,3 +1,17 @@
+import {
+  Alert,
+  Box,
+  Button,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
 import { useEffect, useState } from 'react'
 import { apiClient } from '../api/client'
 import { type SpringPage } from '../api/types'
@@ -54,70 +68,98 @@ export function NotificationsPage() {
   }, [page])
 
   return (
-    <section className="page">
-      <h1 className="page__title">Notifications</h1>
-      <p className="page__lead">
-        Email delivery log for addresses belonging to users in your organization (e.g. password
-        reset). Payload details stay on the server.
-      </p>
-      {loading ? <p className="page__stub">Loading…</p> : null}
-      {error ? <p className="page__error">{error}</p> : null}
-      {data && !loading && data.totalElements === 0 ? (
-        <p className="page__stub">No notification rows yet for your team&apos;s addresses.</p>
+    <Box
+      component="section"
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        p: 3,
+      }}
+    >
+      <Typography variant="h6" component="h1" gutterBottom>
+        Notifications
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        Email delivery log for addresses belonging to users in your organization (e.g. password reset). Payload
+        details stay on the server.
+      </Typography>
+
+      {loading ? (
+        <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+          Loading…
+        </Typography>
       ) : null}
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      ) : null}
+
+      {data && !loading && data.totalElements === 0 ? (
+        <Typography variant="body2" color="text.secondary">
+          No notification rows yet for your team&apos;s addresses.
+        </Typography>
+      ) : null}
+
       {data && !loading && data.totalElements > 0 ? (
         <>
-          <p className="page__lead">
+          <Typography variant="body2" sx={{ mb: 2 }}>
             Page {data.number + 1} of {Math.max(1, data.totalPages)} · {data.totalElements} total
-          </p>
-          <div className="table-wrap">
-            <table className="batch-table">
-              <thead>
-                <tr>
-                  <th>When</th>
-                  <th>Template</th>
-                  <th>Status</th>
-                  <th>To</th>
-                  <th>Sent</th>
-                  <th>Error</th>
-                </tr>
-              </thead>
-              <tbody>
+          </Typography>
+          <TableContainer component={Paper} variant="outlined" sx={{ mb: 2, overflowX: 'auto' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>When</TableCell>
+                  <TableCell>Template</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>To</TableCell>
+                  <TableCell>Sent</TableCell>
+                  <TableCell>Error</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {data.content.map((n) => (
-                  <tr key={n.id}>
-                    <td>{formatWhen(n.createdAt)}</td>
-                    <td>
-                      <code>{n.templateKey}</code>
-                    </td>
-                    <td>{n.status}</td>
-                    <td>{n.recipientEmail}</td>
-                    <td>{formatWhen(n.sentAt)}</td>
-                    <td>{n.errorMessage ? <span title={n.errorMessage}>Yes</span> : '—'}</td>
-                  </tr>
+                  <TableRow key={n.id} hover>
+                    <TableCell>{formatWhen(n.createdAt)}</TableCell>
+                    <TableCell>
+                      <Typography component="code" variant="body2">
+                        {n.templateKey}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{n.status}</TableCell>
+                    <TableCell>{n.recipientEmail}</TableCell>
+                    <TableCell>{formatWhen(n.sentAt)}</TableCell>
+                    <TableCell>
+                      {n.errorMessage ? (
+                        <Typography component="span" title={n.errorMessage} variant="body2">
+                          Yes
+                        </Typography>
+                      ) : (
+                        '—'
+                      )}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="pager">
-            <button
-              type="button"
-              className="page__button"
-              disabled={page <= 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Stack spacing={1} sx={{ flexDirection: 'row' }}>
+            <Button variant="outlined" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
               Previous
-            </button>
-            <button
-              type="button"
-              className="page__button"
+            </Button>
+            <Button
+              variant="outlined"
               disabled={page >= data.totalPages - 1}
               onClick={() => setPage((p) => p + 1)}
             >
               Next
-            </button>
-          </div>
+            </Button>
+          </Stack>
         </>
       ) : null}
-    </section>
+    </Box>
   )
 }

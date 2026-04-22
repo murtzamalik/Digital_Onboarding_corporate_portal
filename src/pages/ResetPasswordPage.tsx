@@ -1,5 +1,16 @@
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Link as MuiLink,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import axios, { isAxiosError } from 'axios'
-import { type FormEvent, useMemo, useState } from 'react'
+import { type FormEvent, type ReactNode, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { runtimeConfig } from '../config/runtime'
 
@@ -10,6 +21,27 @@ function readApiError(err: unknown): string | null {
     return data.error
   }
   return null
+}
+
+function AuthShell({ children }: { children: ReactNode }) {
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, border: 1, borderColor: 'divider' }}>
+          {children}
+        </Paper>
+      </Container>
+    </Box>
+  )
 }
 
 export function ResetPasswordPage() {
@@ -56,66 +88,80 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <section className="page">
-        <h1 className="page__title">Invalid reset link</h1>
-        <p className="page__lead">This page needs a valid token from your email.</p>
-        <p className="page__notice">
-          <Link to="/forgot-password">Request a new reset link</Link>
+      <AuthShell>
+        <Typography variant="h5" component="h1" gutterBottom>
+          Invalid reset link
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          This page needs a valid token from your email.
+        </Typography>
+        <Typography variant="body2">
+          <MuiLink component={Link} to="/forgot-password" underline="hover">
+            Request a new reset link
+          </MuiLink>
           {' · '}
-          <Link to="/login">Sign in</Link>
-        </p>
-      </section>
+          <MuiLink component={Link} to="/login" underline="hover">
+            Sign in
+          </MuiLink>
+        </Typography>
+      </AuthShell>
     )
   }
 
   return (
-    <section className="page">
-      <h1 className="page__title">Choose a new password</h1>
-      <p className="page__lead">Enter a new password for your corporate portal account.</p>
+    <AuthShell>
+      <Typography variant="h5" component="h1" gutterBottom>
+        Choose a new password
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Enter a new password for your corporate portal account.
+      </Typography>
       {done ? (
-        <div className="page__stack">
-          <p className="page__notice" role="status">
+        <Stack spacing={2}>
+          <Alert severity="success" role="status">
             Password has been updated. You can sign in with the new password.
-          </p>
-          <p className="page__notice">
-            <Link to="/login">Sign in</Link>
-          </p>
-        </div>
+          </Alert>
+          <Typography variant="body2">
+            <MuiLink component={Link} to="/login" underline="hover">
+              Sign in
+            </MuiLink>
+          </Typography>
+        </Stack>
       ) : (
-        <form className="page__form" onSubmit={onSubmit}>
-          <label className="page__label">
-            New password
-            <input
-              className="page__input"
+        <Box component="form" onSubmit={onSubmit}>
+          <Stack spacing={2}>
+            <TextField
+              label="New password"
               type="password"
               autoComplete="new-password"
               value={password}
               onChange={(ev) => setPassword(ev.target.value)}
               required
-              minLength={8}
+              fullWidth
+              slotProps={{ htmlInput: { minLength: 8 } }}
             />
-          </label>
-          <label className="page__label">
-            Confirm password
-            <input
-              className="page__input"
+            <TextField
+              label="Confirm password"
               type="password"
               autoComplete="new-password"
               value={confirm}
               onChange={(ev) => setConfirm(ev.target.value)}
               required
-              minLength={8}
+              fullWidth
+              slotProps={{ htmlInput: { minLength: 8 } }}
             />
-          </label>
-          {error ? <p className="page__error">{error}</p> : null}
-          <button className="page__button" type="submit" disabled={busy}>
-            {busy ? 'Updating…' : 'Update password'}
-          </button>
-          <p className="page__notice">
-            <Link to="/login">Back to sign in</Link>
-          </p>
-        </form>
+            {error ? <Alert severity="error">{error}</Alert> : null}
+            <Button type="submit" disabled={busy} fullWidth size="large">
+              {busy ? 'Updating…' : 'Update password'}
+            </Button>
+            <Typography variant="body2">
+              <MuiLink component={Link} to="/login" underline="hover">
+                Back to sign in
+              </MuiLink>
+            </Typography>
+          </Stack>
+        </Box>
       )}
-    </section>
+    </AuthShell>
   )
 }

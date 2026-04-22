@@ -1,7 +1,20 @@
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Divider,
+  Stack,
+  Link as MuiLink,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+} from '@mui/material'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { usePortalOutletContext } from '../portalOutletContext'
 import { apiClient } from '../api/client'
-import { type PortalSession, type SpringPage } from '../api/types'
+import { type SpringPage } from '../api/types'
 
 type BatchRow = {
   id: number
@@ -14,31 +27,25 @@ type BatchRow = {
 }
 
 export function DashboardPage() {
-  const [session, setSession] = useState<PortalSession | null>(null)
+  const { session, sessionReady } = usePortalOutletContext()
   const [batches, setBatches] = useState<SpringPage<BatchRow> | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!sessionReady) return
     let cancelled = false
     ;(async () => {
       setError(null)
       setLoading(true)
       try {
-        const [sRes, bRes] = await Promise.all([
-          apiClient.get<PortalSession>('/session'),
-          apiClient.get<SpringPage<BatchRow>>('/batches', {
-            params: { page: 0, size: 5, sort: 'createdAt,desc' },
-          }),
-        ])
-        if (!cancelled) {
-          setSession(sRes.data)
-          setBatches(bRes.data)
-        }
+        const { data } = await apiClient.get<SpringPage<BatchRow>>('/batches', {
+          params: { page: 0, size: 5, sort: 'createdAt,desc' },
+        })
+        if (!cancelled) setBatches(data)
       } catch {
         if (!cancelled) {
           setError('Could not load dashboard. Sign in again or check the API.')
-          setSession(null)
           setBatches(null)
         }
       } finally {
@@ -48,15 +55,34 @@ export function DashboardPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [sessionReady])
 
   return (
-    <section className="page">
-      <h1 className="page__title">Dashboard</h1>
-      {loading ? <p className="page__stub">Loading…</p> : null}
-      {error ? <p className="page__error">{error}</p> : null}
-      {session && !loading ? (
-        <p className="page__lead">
+    <Box
+      component="section"
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        p: 3,
+      }}
+    >
+      <Typography variant="h6" component="h1" gutterBottom>
+        Dashboard
+      </Typography>
+
+      {!sessionReady ? (
+        <Stack spacing={1} sx={{ py: 2, flexDirection: 'row', alignItems: 'center' }}>
+          <CircularProgress size={22} />
+          <Typography variant="body2" color="text.secondary">
+            Loading…
+          </Typography>
+        </Stack>
+      ) : !session ? (
+        <Alert severity="warning">Could not load your session. Try signing in again.</Alert>
+      ) : (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Signed in as portal user <code>{session.portalUserId}</code>
           {session.corporateClientId != null ? (
             <>
@@ -64,39 +90,58 @@ export function DashboardPage() {
               · Client <code>{session.corporateClientId}</code>
             </>
           ) : null}
-        </p>
+        </Typography>
+      )}
+
+      {loading ? (
+        <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+          Loading batches…
+        </Typography>
       ) : null}
-      {batches && !loading ? (
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      ) : null}
+
+      {batches && !loading && sessionReady ? (
         <>
-          <p className="page__lead">
-            <strong>{batches.totalElements}</strong> batch{batches.totalElements === 1 ? '' : 'es'}{' '}
-            total.
-          </p>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            <strong>{batches.totalElements}</strong> batch{batches.totalElements === 1 ? '' : 'es'} total.
+          </Typography>
           {batches.content.length > 0 ? (
-            <ul className="page__stack">
+            <List dense disablePadding sx={{ mb: 2, maxWidth: 560 }}>
               {batches.content.map((b) => (
-                <li key={b.id}>
-                  <Link to={`/batches/${encodeURIComponent(b.batchReference)}`}>
-                    {b.batchReference}
-                  </Link>{' '}
-                  <span className="page__stub">
-                    ({b.status} · {b.validRowCount}/{b.totalRows} valid)
-                  </span>
-                </li>
+                <ListItem key={b.id} disablePadding sx={{ py: 0.5 }}>
+                  <ListItemText
+                    primary={
+                      <MuiLink component={Link} to={`/batches/${encodeURIComponent(b.batchReference)}`}>
+                        {b.batchReference}
+                      </MuiLink>
+                    }
+                    secondary={`${b.status} · ${b.validRowCount}/${b.totalRows} valid`}
+                  />
+                </ListItem>
               ))}
-            </ul>
+            </List>
           ) : (
-            <p className="page__stub">No batches yet. Upload one from the Batches page.</p>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              No batches yet. Upload one from the Batches page.
+            </Typography>
           )}
-          <p>
-            <Link to="/batches">View all batches</Link>
-          </p>
+          <Typography variant="body2">
+            <MuiLink component={Link} to="/batches">
+              View all batches
+            </MuiLink>
+          </Typography>
         </>
       ) : null}
-      <p className="page__notice">
-        Status-driven data comes from <code>/api/v1/portal/session</code> and{' '}
-        <code>/api/v1/portal/batches</code>.
-      </p>
-    </section>
+
+      <Divider sx={{ my: 2 }} />
+
+      <Typography variant="caption" color="text.secondary" component="p" sx={{ m: 0 }}>
+        Status-driven data comes from <code>/api/v1/portal/session</code> and <code>/api/v1/portal/batches</code>.
+      </Typography>
+    </Box>
   )
 }

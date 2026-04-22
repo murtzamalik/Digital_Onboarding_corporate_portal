@@ -1,3 +1,14 @@
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Link as MuiLink,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material'
 import axios, { isAxiosError } from 'axios'
 import { type FormEvent, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -31,43 +42,62 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <section className="page">
-      <h1 className="page__title">Reset password</h1>
-      <p className="page__lead">
-        Enter your portal email. If we find a matching account, you will receive reset
-        instructions.
-      </p>
-      {done ? (
-        <div className="page__stack">
-          <p className="page__notice" role="status">
-            If an account exists for this email, password reset instructions have been sent.
-          </p>
-          <p className="page__notice">
-            <Link to="/login">Back to sign in</Link>
-          </p>
-        </div>
-      ) : (
-        <form className="page__form" onSubmit={onSubmit}>
-          <label className="page__label">
-            Email
-            <input
-              className="page__input"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(ev) => setEmail(ev.target.value)}
-              required
-            />
-          </label>
-          {error ? <p className="page__error">{error}</p> : null}
-          <button className="page__button" type="submit" disabled={busy}>
-            {busy ? 'Sending…' : 'Send reset link'}
-          </button>
-          <p className="page__notice">
-            <Link to="/login">Back to sign in</Link>
-          </p>
-        </form>
-      )}
-    </section>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: 'background.default',
+        py: 4,
+      }}
+    >
+      <Container maxWidth="sm">
+        <Paper elevation={0} sx={{ p: { xs: 3, sm: 4 }, border: 1, borderColor: 'divider' }}>
+          <Typography variant="h5" component="h1" gutterBottom>
+            Reset password
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Enter your portal email. If we find a matching account, you will receive reset instructions.
+          </Typography>
+
+          {done ? (
+            <Stack spacing={2}>
+              <Alert severity="info" role="status">
+                If an account exists for this email, password reset instructions have been sent.
+              </Alert>
+              <Typography variant="body2">
+                <MuiLink component={Link} to="/login" underline="hover">
+                  Back to sign in
+                </MuiLink>
+              </Typography>
+            </Stack>
+          ) : (
+            <Box component="form" onSubmit={onSubmit}>
+              <Stack spacing={2}>
+                <TextField
+                  label="Email"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(ev) => setEmail(ev.target.value)}
+                  required
+                  fullWidth
+                />
+                {error ? <Alert severity="error">{error}</Alert> : null}
+                <Button type="submit" disabled={busy} fullWidth size="large">
+                  {busy ? 'Sending…' : 'Send reset link'}
+                </Button>
+                <Typography variant="body2">
+                  <MuiLink component={Link} to="/login" underline="hover">
+                    Back to sign in
+                  </MuiLink>
+                </Typography>
+              </Stack>
+            </Box>
+          )}
+        </Paper>
+      </Container>
+    </Box>
   )
 }

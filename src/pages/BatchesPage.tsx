@@ -1,7 +1,24 @@
-import { type FormEvent, useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Link as MuiLink,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
+import { usePortalOutletContext } from '../portalOutletContext'
 import { apiClient } from '../api/client'
-import { type PortalSession, type SpringPage } from '../api/types'
+import { type SpringPage } from '../api/types'
 
 type BatchRow = {
   id: number
@@ -16,9 +33,11 @@ type BatchRow = {
 const PAGE_SIZE = 20
 
 export function BatchesPage() {
+  const { session, sessionReady } = usePortalOutletContext()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [fileLabel, setFileLabel] = useState<string | null>(null)
   const [page, setPage] = useState(0)
   const [data, setData] = useState<SpringPage<BatchRow> | null>(null)
-  const [session, setSession] = useState<PortalSession | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [uploadMsg, setUploadMsg] = useState<string | null>(null)
@@ -26,21 +45,7 @@ export function BatchesPage() {
   const [listRefresh, setListRefresh] = useState(0)
 
   useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const { data: s } = await apiClient.get<PortalSession>('/session')
-        if (!cancelled) setSession(s)
-      } catch {
-        if (!cancelled) setSession(null)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  useEffect(() => {
+    if (!sessionReady) return
     let cancelled = false
     ;(async () => {
       setError(null)
@@ -66,7 +71,7 @@ export function BatchesPage() {
     return () => {
       cancelled = true
     }
-  }, [page, listRefresh])
+  }, [page, listRefresh, sessionReady])
 
   async function onUpload(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -74,9 +79,7 @@ export function BatchesPage() {
       setUploadMsg('No corporate client on your account.')
       return
     }
-    const form = e.currentTarget
-    const fileInput = form.elements.namedItem('file') as HTMLInputElement
-    const file = fileInput?.files?.[0]
+    const file = fileInputRef.current?.files?.[0]
     if (!file) {
       setUploadMsg('Choose an Excel file.')
       return
@@ -91,7 +94,8 @@ export function BatchesPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setUploadMsg('Upload started. Refresh the list in a moment.')
-      fileInput.value = ''
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      setFileLabel(null)
       setPage(0)
       setListRefresh((n) => n + 1)
     } catch {
@@ -101,81 +105,136 @@ export function BatchesPage() {
     }
   }
 
+  if (!sessionReady) {
+    return (
+      <Box
+        component="section"
+        sx={{
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
+          p: 3,
+        }}
+      >
+        <Typography variant="h6" component="h1" gutterBottom>
+          Batches
+        </Typography>
+        <Stack spacing={1} sx={{ py: 2, flexDirection: 'row', alignItems: 'center' }}>
+          <CircularProgress size={22} />
+          <Typography variant="body2" color="text.secondary">
+            Loading…
+          </Typography>
+        </Stack>
+      </Box>
+    )
+  }
+
   return (
-    <section className="page">
-      <h1 className="page__title">Batches</h1>
-      {loading ? <p className="page__stub">Loading…</p> : null}
-      {error ? <p className="page__error">{error}</p> : null}
-      {session?.corporateClientId != null ? (
-        <>
-          <h2 className="page__title" style={{ fontSize: '1.1rem' }}>
-            New batch upload
-          </h2>
-          <p className="page__notice">ADMIN role only.</p>
-          <form className="page__form" onSubmit={onUpload}>
-            <label className="page__label">
-              Excel file
-              <input className="page__input" name="file" type="file" accept=".xlsx,.xls" required />
-            </label>
-            {uploadMsg ? <p className="page__notice">{uploadMsg}</p> : null}
-            <button className="page__button" type="submit" disabled={uploadBusy}>
-              {uploadBusy ? 'Uploading…' : 'Upload'}
-            </button>
-          </form>
-        </>
+    <Box
+      component="section"
+      sx={{
+        bgcolor: 'background.paper',
+        border: 1,
+        borderColor: 'divider',
+        borderRadius: 1,
+        p: 3,
+      }}
+    >
+      <Typography variant="h6" component="h1" gutterBottom>
+        Batches
+      </Typography>
+
+      {loading ? (
+        <Typography variant="body2" color="text.secondary" sx={{ py: 1 }}>
+          Loading…
+        </Typography>
       ) : null}
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      ) : null}
+
+      {session?.corporateClientId != null ? (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+            New batch upload
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
+            ADMIN role only.
+          </Typography>
+          <Box component="form" onSubmit={onUpload}>
+            <Stack spacing={2} sx={{ maxWidth: 480 }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                style={{ display: 'none' }}
+                onChange={(ev) => setFileLabel(ev.target.files?.[0]?.name ?? null)}
+              />
+              <Stack spacing={2} sx={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                <Button type="button" variant="outlined" onClick={() => fileInputRef.current?.click()}>
+                  Choose Excel
+                </Button>
+                <Typography variant="body2" color="text.secondary">
+                  {fileLabel ?? 'No file chosen'}
+                </Typography>
+              </Stack>
+              {uploadMsg ? (
+                <Alert severity={uploadMsg.includes('failed') ? 'error' : 'info'}>{uploadMsg}</Alert>
+              ) : null}
+              <Button type="submit" disabled={uploadBusy}>
+                {uploadBusy ? 'Uploading…' : 'Upload'}
+              </Button>
+            </Stack>
+          </Box>
+        </Box>
+      ) : null}
+
       {data && !loading ? (
         <>
-          <p className="page__lead">
-            Page {data.number + 1} of {Math.max(1, data.totalPages)} · {data.totalElements} total </p>
-          <div className="table-wrap">
-            <table className="batch-table">
-              <thead>
-                <tr>
-                  <th>Reference</th>
-                  <th>Status</th>
-                  <th>Rows</th>
-                  <th>Valid / invalid</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Page {data.number + 1} of {Math.max(1, data.totalPages)} · {data.totalElements} total
+          </Typography>
+          <TableContainer component={Paper} variant="outlined" sx={{ mb: 2, overflowX: 'auto' }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Reference</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Rows</TableCell>
+                  <TableCell>Valid / invalid</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {data.content.map((b) => (
-                  <tr key={b.id}>
-                    <td>
-                      <Link to={`/batches/${encodeURIComponent(b.batchReference)}`}>
+                  <TableRow key={b.id} hover>
+                    <TableCell>
+                      <MuiLink component={RouterLink} to={`/batches/${encodeURIComponent(b.batchReference)}`} underline="hover">
                         {b.batchReference}
-                      </Link>
-                    </td>
-                    <td>{b.status}</td>
-                    <td>{b.totalRows}</td>
-                    <td>
+                      </MuiLink>
+                    </TableCell>
+                    <TableCell>{b.status}</TableCell>
+                    <TableCell>{b.totalRows}</TableCell>
+                    <TableCell>
                       {b.validRowCount} / {b.invalidRowCount}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="pager">
-            <button
-              type="button"
-              className="page__button"
-              disabled={page <= 0}
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-            >
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Stack spacing={1} sx={{ flexDirection: 'row' }}>
+            <Button variant="outlined" disabled={page <= 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
               Previous
-            </button>
-            <button
-              type="button"
-              className="page__button"
-              disabled={page >= data.totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
-            >
+            </Button>
+            <Button variant="outlined" disabled={page >= data.totalPages - 1} onClick={() => setPage((p) => p + 1)}>
               Next
-            </button>
-          </div>
+            </Button>
+          </Stack>
         </>
       ) : null}
-    </section>
+    </Box>
   )
 }
