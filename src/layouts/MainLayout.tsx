@@ -52,10 +52,20 @@ export function MainLayout() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Toolbar sx={{ flexWrap: 'wrap', gap: 1, py: 1 }}>
-          <Typography variant="subtitle1" component="span" sx={{ fontWeight: 600, mr: 2 }}>
-            Corporate Portal
+      <AppBar
+        position="sticky"
+        color="inherit"
+        elevation={0}
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          background: (t) =>
+            `linear-gradient(180deg, ${t.palette.background.paper} 0%, ${t.palette.action.hover} 100%)`,
+        }}
+      >
+        <Toolbar sx={{ flexWrap: 'wrap', gap: 1, py: 1.25 }}>
+          <Typography variant="subtitle1" component="span" sx={{ fontWeight: 700, mr: 2, letterSpacing: '0.04em' }}>
+            CEBOS · Corporate
           </Typography>
           {!sessionReady ? (
             <Chip size="small" label="Loading session…" variant="outlined" sx={{ mr: 1 }} />
@@ -90,7 +100,7 @@ export function MainLayout() {
         </Toolbar>
       </AppBar>
       <Box component="main" sx={{ flex: 1, py: 3, px: 2, bgcolor: 'background.default' }}>
-        <Container maxWidth="md">
+        <Container maxWidth="xl">
           <Outlet context={outletContext} />
         </Container>
       </Box>

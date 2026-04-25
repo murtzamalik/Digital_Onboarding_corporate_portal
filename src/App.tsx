@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { MainLayout } from './layouts/MainLayout'
 import { ProtectedLayout } from './layouts/ProtectedLayout'
 import { BatchDetailPage } from './pages/BatchDetailPage'
+import { BatchEmployeeDetailPage } from './pages/BatchEmployeeDetailPage'
 import { BatchesPage } from './pages/BatchesPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
@@ -22,6 +23,7 @@ export default function App() {
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/batches" element={<BatchesPage />} />
+            <Route path="/batches/:ref/employees/:employeeRef" element={<BatchEmployeeDetailPage />} />
             <Route path="/batches/:ref" element={<BatchDetailPage />} />
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
