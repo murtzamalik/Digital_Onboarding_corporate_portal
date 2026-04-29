@@ -2,12 +2,10 @@ import {
   Alert,
   Box,
   CircularProgress,
-  Divider,
+  Paper,
   Stack,
   Link as MuiLink,
-  List,
-  ListItem,
-  ListItemText,
+  LinearProgress,
   Typography,
 } from '@mui/material'
 import { useEffect, useState } from 'react'
@@ -58,19 +56,15 @@ export function DashboardPage() {
   }, [sessionReady])
 
   return (
-    <Box
-      component="section"
-      sx={{
-        bgcolor: 'background.paper',
-        border: 1,
-        borderColor: 'divider',
-        borderRadius: 1,
-        p: 3,
-      }}
-    >
-      <Typography variant="h6" component="h1" gutterBottom>
+    <Stack spacing={2.5}>
+      <Box>
+        <Typography variant="h5" component="h1" sx={{ mb: 0.5 }}>
         Dashboard
-      </Typography>
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Account onboarding overview for your company.
+        </Typography>
+      </Box>
 
       {!sessionReady ? (
         <Stack spacing={1} sx={{ py: 2, flexDirection: 'row', alignItems: 'center' }}>
@@ -106,29 +100,37 @@ export function DashboardPage() {
 
       {batches && !loading && sessionReady ? (
         <>
-          <Typography variant="body2" sx={{ mb: 1 }}>
-            <strong>{batches.totalElements}</strong> batch{batches.totalElements === 1 ? '' : 'es'} total.
-          </Typography>
-          {batches.content.length > 0 ? (
-            <List dense disablePadding sx={{ mb: 2, maxWidth: 560 }}>
-              {batches.content.map((b) => (
-                <ListItem key={b.id} disablePadding sx={{ py: 0.5 }}>
-                  <ListItemText
-                    primary={
-                      <MuiLink component={Link} to={`/batches/${encodeURIComponent(b.batchReference)}`}>
-                        {b.batchReference}
-                      </MuiLink>
-                    }
-                    secondary={`${b.status} · ${b.validRowCount}/${b.totalRows} valid`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          ) : (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              No batches yet. Upload one from the Batches page.
-            </Typography>
-          )}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr', xl: 'repeat(4, 1fr)' }, gap: 2 }}>
+            <Paper variant="outlined" sx={{ p: 2, borderLeft: '4px solid #64748B' }}>
+              <Typography variant="caption" color="text.secondary">Total Submitted</Typography>
+              <Typography variant="h4">{batches.totalElements}</Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, borderLeft: '4px solid #7C3AED' }}>
+              <Typography variant="caption" color="text.secondary">Invites Sent</Typography>
+              <Typography variant="h4">{batches.content.reduce((s, b) => s + b.validRowCount, 0)}</Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, borderLeft: '4px solid #16A34A' }}>
+              <Typography variant="caption" color="text.secondary">Accounts Opened</Typography>
+              <Typography variant="h4">{batches.content.reduce((s, b) => s + (b.validRowCount - b.invalidRowCount), 0)}</Typography>
+            </Paper>
+            <Paper variant="outlined" sx={{ p: 2, borderLeft: '4px solid #DC2626' }}>
+              <Typography variant="caption" color="text.secondary">Failed</Typography>
+              <Typography variant="h4">{batches.content.reduce((s, b) => s + b.invalidRowCount, 0)}</Typography>
+            </Paper>
+          </Box>
+          {batches.content[0] ? (
+            <Paper variant="outlined" sx={{ p: 2 }}>
+              <Typography variant="subtitle2">Current Batch Progress ({batches.content[0].batchReference})</Typography>
+              <Typography variant="caption" color="text.secondary">
+                {batches.content[0].totalRows} employees
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={Math.round((batches.content[0].validRowCount / Math.max(1, batches.content[0].totalRows)) * 100)}
+                sx={{ mt: 1, height: 10, borderRadius: 6 }}
+              />
+            </Paper>
+          ) : null}
           <Typography variant="body2">
             <MuiLink component={Link} to="/batches">
               View all batches
@@ -137,11 +139,9 @@ export function DashboardPage() {
         </>
       ) : null}
 
-      <Divider sx={{ my: 2 }} />
-
       <Typography variant="caption" color="text.secondary" component="p" sx={{ m: 0 }}>
         Status-driven data comes from <code>/api/v1/portal/session</code> and <code>/api/v1/portal/batches</code>.
       </Typography>
-    </Box>
+    </Stack>
   )
 }

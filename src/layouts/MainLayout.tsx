@@ -2,8 +2,14 @@ import {
   AppBar,
   Box,
   Button,
-  Chip,
   Container,
+  Divider,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Stack,
   Toolbar,
   Typography,
 } from '@mui/material'
@@ -14,11 +20,31 @@ import { apiClient } from '../api/client'
 import { type PortalSession } from '../api/types'
 import { clearPortalAccessToken } from '../auth/token'
 
-const navButtonSx = {
-  textTransform: 'none' as const,
-  fontWeight: 500,
-  color: 'text.secondary',
-  '&[aria-current="page"]': { color: 'primary.main', bgcolor: 'action.selected' },
+const drawerWidth = 240
+
+function NavListItem({ to, end, label }: { to: string; end?: boolean; label: string }) {
+  return (
+    <ListItem disablePadding sx={{ display: 'block' }}>
+      <NavLink to={to} end={end} style={{ textDecoration: 'none', color: 'inherit' }}>
+        {({ isActive }) => (
+          <ListItemButton
+            selected={isActive}
+            sx={{
+              borderRadius: 1,
+              mx: 1,
+              mb: 0.25,
+              color: isActive ? '#FFFFFF' : '#94A3B8',
+              backgroundColor: isActive ? '#065F46' : 'transparent',
+              '&.Mui-selected, &.Mui-selected:hover': { backgroundColor: '#065F46' },
+              '&:hover': { backgroundColor: '#1E3A5F' },
+            }}
+          >
+            <ListItemText primary={label} slotProps={{ primary: { variant: 'body2' } }} />
+          </ListItemButton>
+        )}
+      </NavLink>
+    </ListItem>
+  )
 }
 
 export function MainLayout() {
@@ -63,46 +89,68 @@ export function MainLayout() {
             `linear-gradient(180deg, ${t.palette.background.paper} 0%, ${t.palette.action.hover} 100%)`,
         }}
       >
-        <Toolbar sx={{ flexWrap: 'wrap', gap: 1, py: 1.25 }}>
-          <Typography variant="subtitle1" component="span" sx={{ fontWeight: 700, mr: 2, letterSpacing: '0.04em' }}>
-            CEBOS · Corporate
-          </Typography>
-          {!sessionReady ? (
-            <Chip size="small" label="Loading session…" variant="outlined" sx={{ mr: 1 }} />
-          ) : session ? (
-            <Chip
-              size="small"
-              label={`User ${session.portalUserId}`}
-              variant="outlined"
-              sx={{ mr: 1, display: { xs: 'none', sm: 'flex' } }}
-            />
-          ) : null}
-          <Box component="nav" aria-label="Main" sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, flex: 1 }}>
-            <Button component={NavLink} to="/dashboard" sx={navButtonSx}>
-              Dashboard
-            </Button>
-            <Button component={NavLink} to="/batches" sx={navButtonSx}>
-              Batches
-            </Button>
-            <Button component={NavLink} to="/reports" sx={navButtonSx}>
-              Reports
-            </Button>
-            <Button component={NavLink} to="/notifications" sx={navButtonSx}>
-              Notifications
-            </Button>
-            <Button component={NavLink} to="/users" sx={navButtonSx}>
-              Users
-            </Button>
-          </Box>
+        <Toolbar sx={{ gap: 2, py: 0.5, justifyContent: 'space-between' }}>
+          <Stack spacing={0.25}>
+            <Typography variant="subtitle1" component="span" sx={{ fontWeight: 700, letterSpacing: '0.04em' }}>
+              CEBOS · Corporate portal
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {sessionReady && session
+                ? `Company ${session.corporateClientId ?? '-'} · User ${session.portalUserId}`
+                : 'Loading session...'}
+            </Typography>
+          </Stack>
           <Button variant="outlined" color="inherit" onClick={signOut} sx={{ textTransform: 'none' }}>
             Sign out
           </Button>
         </Toolbar>
       </AppBar>
-      <Box component="main" sx={{ flex: 1, py: 3, px: 2, bgcolor: 'background.default' }}>
-        <Container maxWidth="xl">
-          <Outlet context={outletContext} />
-        </Container>
+      <Box sx={{ display: 'flex', flex: 1, minHeight: 0 }}>
+        <Drawer
+          variant="permanent"
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              position: 'relative',
+              borderRight: 1,
+              borderColor: 'divider',
+              bgcolor: '#0F2044',
+              color: '#94A3B8',
+            },
+          }}
+          open
+        >
+          <List dense sx={{ pt: 1 }}>
+            <Typography variant="caption" sx={{ px: 2, py: 1, display: 'block', color: '#475569', letterSpacing: 1 }}>
+              OVERVIEW
+            </Typography>
+            <NavListItem to="/dashboard" label="Dashboard" />
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="caption" sx={{ px: 2, py: 1, display: 'block', color: '#475569', letterSpacing: 1 }}>
+              BATCHES
+            </Typography>
+            <NavListItem to="/batches/upload" label="Upload New Batch" />
+            <NavListItem to="/batches" end label="My Batches" />
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="caption" sx={{ px: 2, py: 1, display: 'block', color: '#475569', letterSpacing: 1 }}>
+              EMPLOYEES
+            </Typography>
+            <NavListItem to="/invites" label="Invite Management" />
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="caption" sx={{ px: 2, py: 1, display: 'block', color: '#475569', letterSpacing: 1 }}>
+              REPORTS
+            </Typography>
+            <NavListItem to="/reports" label="Download Reports" />
+          </List>
+        </Drawer>
+        <Box component="main" sx={{ flex: 1, py: 3, px: 2, bgcolor: 'background.default', overflow: 'auto' }}>
+          <Container maxWidth="xl">
+            <Outlet context={outletContext} />
+          </Container>
+        </Box>
       </Box>
     </Box>
   )

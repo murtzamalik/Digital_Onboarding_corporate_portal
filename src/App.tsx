@@ -3,14 +3,14 @@ import { MainLayout } from './layouts/MainLayout'
 import { ProtectedLayout } from './layouts/ProtectedLayout'
 import { BatchDetailPage } from './pages/BatchDetailPage'
 import { BatchEmployeeDetailPage } from './pages/BatchEmployeeDetailPage'
-import { BatchesPage } from './pages/BatchesPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { InviteManagementPage } from './pages/InviteManagementPage'
 import { LoginPage } from './pages/LoginPage'
+import { MyBatchesPage } from './pages/MyBatchesPage'
 import { ResetPasswordPage } from './pages/ResetPasswordPage'
-import { NotificationsPage } from './pages/NotificationsPage'
 import { ReportsPage } from './pages/ReportsPage'
-import { UsersPage } from './pages/UsersPage'
+import { UploadBatchPage } from './pages/UploadBatchPage'
 
 export default function App() {
   return (
@@ -22,12 +22,12 @@ export default function App() {
         <Route element={<ProtectedLayout />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/batches" element={<BatchesPage />} />
+            <Route path="/batches/upload" element={<UploadBatchPage />} />
+            <Route path="/batches" element={<MyBatchesPage />} />
             <Route path="/batches/:ref/employees/:employeeRef" element={<BatchEmployeeDetailPage />} />
             <Route path="/batches/:ref" element={<BatchDetailPage />} />
+            <Route path="/invites" element={<InviteManagementPage />} />
             <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

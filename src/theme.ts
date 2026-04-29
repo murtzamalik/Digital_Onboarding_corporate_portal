@@ -3,15 +3,15 @@ import { createTheme } from '@mui/material/styles'
 export const appTheme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#0f2744', light: '#1e3a5f', dark: '#0a1c30' },
-    secondary: { main: '#1565c0' },
-    success: { main: '#1b5e20' },
-    warning: { main: '#e65100' },
-    error: { main: '#b71c1c' },
-    background: { default: '#eef1f5', paper: '#ffffff' },
-    divider: 'rgba(15, 39, 68, 0.12)',
+    primary: { main: '#059669', light: '#34D399', dark: '#065F46' },
+    secondary: { main: '#0F2044' },
+    success: { main: '#16A34A' },
+    warning: { main: '#D97706' },
+    error: { main: '#DC2626' },
+    background: { default: '#F0F4F8', paper: '#FFFFFF' },
+    divider: '#E2E8F0',
   },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 8 },
   typography: {
     fontFamily: '"Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     h4: { fontWeight: 700, letterSpacing: '-0.02em' },
@@ -25,7 +25,14 @@ export const appTheme = createTheme({
     },
     MuiCard: {
       styleOverrides: {
-        root: { boxShadow: '0 1px 3px rgba(15, 39, 68, 0.08)' },
+        root: { boxShadow: '0 1px 3px rgba(15, 23, 42, 0.08)' },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#F8FAFC',
+        },
       },
     },
   },

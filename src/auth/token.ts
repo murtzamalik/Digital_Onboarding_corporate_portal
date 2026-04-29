@@ -5,10 +5,6 @@ export function getPortalAccessToken(): string | null {
   return sessionStorage.getItem(ACCESS_KEY)
 }
 
-export function setPortalAccessToken(token: string): void {
-  sessionStorage.setItem(ACCESS_KEY, token)
-}
-
 export function clearPortalAccessToken(): void {
   sessionStorage.removeItem(ACCESS_KEY)
   sessionStorage.removeItem(REFRESH_KEY)
